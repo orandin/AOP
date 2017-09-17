@@ -1,11 +1,11 @@
-package main;
+package main.aspectJ;
 import java.util.HashMap;
 import java.util.Map;
 
 public aspect SingletonAspect {	
 	private Map<Class<?>, Object> instances = new HashMap<Class<?>, Object>();
 	
-	pointcut getInstance(): call( main..*.new(..) );
+	pointcut getInstance(): (call(*.Orders.new(..)) || call(*.Clients.new(..)));
 	
 	Object around(): getInstance() {
 		Class<?> ClassInstance = thisJoinPoint.getSignature().getDeclaringType();
