@@ -1,9 +1,11 @@
 package main.aspectJ;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.aspectj.lang.Signature;
+import org.aspectj.lang.reflect.MethodSignature;
 
 public aspect Inspector {
 	private Map<Class<?>, Integer> actors = new HashMap<Class<?>, Integer>();
@@ -13,7 +15,7 @@ public aspect Inspector {
 	private int rank = -1;
 	private int previousActorRank = 0;
 
-	pointcut traceCallMethod(): !within(Inspector) && !within(main.aspectJ..*) && within(main..*);
+	pointcut traceCallMethod(): !within(Inspector) && !within(main.aspectJ..*) && ( execution(* main.Main.main(*)) || call(* main..*(..)) || call(main..*.new(..)) );
 	
 	Object around(): traceCallMethod() {
 		String lineCall = "";
@@ -21,8 +23,17 @@ public aspect Inspector {
 		
 		Signature s = thisJoinPoint.getSignature();
 		Class<?> ClassInstance = s.getDeclaringType();		
-		String method = s.getName();
-		method = (method.equals("<init>")) ? "new()" : method+"()";
+		String method = s.getName() + "()";
+		String type = ClassInstance.getSimpleName();
+		
+		if  (method.equals("<init>()")) {
+			method = "new "+ type + "()";
+		}
+		else {
+			MethodSignature signature = (MethodSignature) thisJoinPoint.getSignature();
+			Method methode = signature.getMethod();
+			type = methode.getReturnType().getSimpleName();
+		}
 		
 		int previousActorRank = this.previousActorRank;
 		int currentActorRank = getRankActor(ClassInstance);
@@ -30,9 +41,10 @@ public aspect Inspector {
 		if ( previousActorRank < currentActorRank ) {
 			lineCall = initPosition(previousActorRank);
 			lineCallReturn = lineCall;
-			lineCall += trace(previousActorRank, currentActorRank, method, "-", this.lineSize-3) + "->|";
+			lineCall += trace(previousActorRank, currentActorRank, method, "-", this.lineSize-2) + "->|";
 			lineCall = traceOtherActors(currentActorRank, this.rank, lineCall, " ", this.lineSize);
-			lineCallReturn += "<"+ trace(previousActorRank, currentActorRank, method, "-", this.lineSize-3) + "-|";
+			lineCallReturn += "<"+ trace(previousActorRank, currentActorRank, type, "-", this.lineSize-2) + "-|";
+			lineCallReturn = traceOtherActors(currentActorRank, this.rank, lineCallReturn, " ", this.lineSize);
 		}		
 		else if ( previousActorRank == currentActorRank ) {
 			lineCall = initPosition(currentActorRank);
@@ -40,16 +52,16 @@ public aspect Inspector {
 		} else {
 			lineCall = initPosition(currentActorRank);
 			lineCallReturn = lineCall;
-			lineCall += "<" + trace(currentActorRank, previousActorRank, method, "-", this.lineSize-3) + "-";
-			lineCall = traceOtherActors(currentActorRank, this.rank, lineCall, " ", this.lineSize);
-			lineCallReturn += trace(previousActorRank, currentActorRank, method, "-", this.lineSize-3) + "->|";
+			lineCall += "<" + trace(currentActorRank, previousActorRank, method, "-", this.lineSize-3) + "-|";
+			lineCall = traceOtherActors(previousActorRank, this.rank, lineCall, " ", this.lineSize);
+			lineCallReturn += trace(previousActorRank, currentActorRank, type, "-", this.lineSize-3) + "->|";
+			lineCallReturn = traceOtherActors(previousActorRank, this.rank, lineCallReturn, " ", this.lineSize);
 		}
 		
 		System.out.println(lineCall);
 		
 		this.previousActorRank = currentActorRank;
 		Object obj = proceed();
-		
 		
 		if (lineCallReturn != "") {
 			System.out.println(lineCallReturn);
@@ -86,8 +98,8 @@ public aspect Inspector {
 		toRank -= 1;
 		
 		for(int i = fromRank; i < toRank; i++) {
-			out += this.line;
-			lineSize++;
+			out += this.line+"-";
+			//lineSize++;
 		}
 		
 		while(line.length() < lineSize) {
@@ -125,9 +137,9 @@ public aspect Inspector {
 		}
 		
 		toRank -= 1;
-		out += "|";
+		out += "";
 		
-		for(int i = fromRank; i < toRank; i++) {
+		for(int i = fromRank; i <= toRank; i++) {
 			out += blanks + "|";
 		}
 		

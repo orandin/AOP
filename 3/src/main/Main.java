@@ -46,6 +46,10 @@ public class Main {
 		clientList.delClient(bob);
 		//System.out.println("Nb clients après tentative de suppression (bob): " + clientList.size());
 		
+		// TEST singleton
+		
+		Orders orderList2 = new Orders();
+		assert( orderList2.equals(orderList) );
 	}
 
 }

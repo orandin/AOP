@@ -13,10 +13,10 @@ public aspect SingletonAspect {
 		
 		if (instance == null) {
 			instance = proceed();
-			System.out.println("Pas d'instance : création");
+			System.out.println("[Singleton] Pas d'instance : création");
 			this.instances.put(ClassInstance, instance);
 		} else {
-			System.out.println("Instance déjà existante: récupération");
+			System.out.println("[Singleton] Instance déjà existante: récupération");
 		}
 		return instance;
 	}
