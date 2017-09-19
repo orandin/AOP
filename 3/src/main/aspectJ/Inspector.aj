@@ -15,7 +15,7 @@ public aspect Inspector {
 	private int rank = -1;
 	private int previousActorRank = 0;
 
-	pointcut traceCallMethod(): !within(Inspector) && !within(main.aspectJ..*) && ( execution(* main.Main.main(*)) || call(* main..*(..)) || call(main..*.new(..)) );
+	pointcut traceCallMethod(): !within(Inspector) && !within(main.aspectJ..*) && ( execution(* main.Main.main(*)) || call(* main..*(..)) );
 	
 	Object around(): traceCallMethod() {
 		String lineCall = "";
@@ -24,16 +24,10 @@ public aspect Inspector {
 		Signature s = thisJoinPoint.getSignature();
 		Class<?> ClassInstance = s.getDeclaringType();		
 		String method = s.getName() + "()";
-		String type = ClassInstance.getSimpleName();
-		
-		if  (method.equals("<init>()")) {
-			method = "new "+ type + "()";
-		}
-		else {
-			MethodSignature signature = (MethodSignature) thisJoinPoint.getSignature();
-			Method methode = signature.getMethod();
-			type = methode.getReturnType().getSimpleName();
-		}
+	
+		MethodSignature signature = (MethodSignature) thisJoinPoint.getSignature();
+		Method methode = signature.getMethod();
+		String type = methode.getReturnType().getSimpleName();
 		
 		int previousActorRank = this.previousActorRank;
 		int currentActorRank = getRankActor(ClassInstance);
